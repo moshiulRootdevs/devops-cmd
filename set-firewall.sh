@@ -196,19 +196,15 @@ function apply_restricted_ports() {
 }
 
 ##############################################
-# Docker-safe rules
+# Make Docker obey UFW
 ##############################################
 function apply_docker_rules() {
-    ufw allow in on docker0
-    ufw allow out on docker0
+    echo "Applying Docker/UFW compatibility fix..."
 
-    iptables -I DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-    iptables -I DOCKER-USER -i eth0 -o docker0 -j ACCEPT
-    iptables -I DOCKER-USER -i docker0 ! -d 172.17.0.0/16 -j DROP
-    iptables -I DOCKER-USER -j RETURN
-    iptables -I DOCKER-USER -j DROP
+    mkdir -p /etc/docker
+    echo '{ "iptables": false }' > /etc/docker/daemon.json
 
-    dockerSafeEnabled=true
+    systemctl restart docker
 }
 
 ##############################################
